@@ -1,0 +1,33 @@
+# =============================================================================
+# PR Review Copilot — Python dependencies (pinned versions)
+# =============================================================================
+# Install (from project root, with venv activated):
+#   pip install -r requirements.txt
+#
+# Week 1 only needs the block marked "Week 1" below. Other blocks are commented
+# until we reach those features — uncomment when we get to that week.
+# =============================================================================
+
+# --- Week 1: FastAPI server + GitHub webhook ---------------------------------
+fastapi==0.115.14
+uvicorn[standard]==0.34.0
+python-dotenv==1.0.1
+
+# HTTP client (FastAPI TestClient + later GitHub REST calls)
+httpx==0.28.1
+
+# --- Week 1: tests (when we add tests/test_webhook.py) -----------------------
+pytest==8.3.4
+
+# --- Week 2+: GitHub REST API (fetch PR diff, post review comment) -------------
+# PyGithub==2.9.1
+
+# --- Week 3+: AI reviews via Groq (llama3-70b-8192) ----------------------------
+# groq==1.2.0
+
+# --- Week 4+: SQLite persistence ---------------------------------------------
+# sqlalchemy==2.0.49
+
+# --- Week 5+: tree-sitter code parsing ---------------------------------------
+# tree-sitter==0.24.0
+# tree-sitter-python==0.23.4
