@@ -1,6 +1,6 @@
 """
 GitHub webhook receiver.
-Week 2: Fetch diff → Send to Groq AI → Post review comment on PR.
+Week 3: Save reviews to database after posting comment.
 """
 
 import hashlib
@@ -12,6 +12,7 @@ from fastapi import APIRouter, Header, HTTPException, Request
 
 from app.github_client import fetch_pr_diff, post_pr_comment
 from app.ai_reviewer import review_code
+from app.database import save_review
 
 router = APIRouter()
 
@@ -59,8 +60,10 @@ async def receive_github_webhook(
     x_github_event: str | None = Header(None),
 ):
     body = await request.body()
+    print(f"[webhook] Received request - signature: {x_hub_signature_256}")
+    print(f"[webhook] Secret loaded: {'YES' if WEBHOOK_SECRET else 'NO'}")
     verify_github_signature(body, x_hub_signature_256)
-
+    
     try:
         payload = json.loads(body)
     except json.JSONDecodeError as exc:
@@ -90,14 +93,29 @@ async def receive_github_webhook(
         print(f"  Diff URL: {diff_url}")
         print(f"{'='*60}\n")
 
-        # Step 1 - Fetch the diff
-        diff = await fetch_pr_diff(diff_url)
+        try:
+            # Step 1 - Fetch the diff
+            diff = await fetch_pr_diff(diff_url)
 
-        # Step 2 - Send to Groq AI
-        review = await review_code(diff)
+            # Step 2 - Send to Groq AI
+            review = await review_code(diff)
 
-        # Step 3 - Post comment on GitHub PR
-        comment = format_review_comment(review, title, author)
-        await post_pr_comment(repo_full_name, pr_number, comment)
+            # Step 3 - Post comment on GitHub PR
+            comment = format_review_comment(review, title, author)
+            await post_pr_comment(repo_full_name, pr_number, comment)
+
+            # Step 4 - Save to database
+            save_review(
+                repo_name=repo_full_name,
+                pr_number=pr_number,
+                pr_title=title,
+                author=author,
+                diff_url=diff_url,
+                review_text=review,
+            )
+        except Exception as e:
+            print(f"[webhook] ERROR: {e}")
+            import traceback
+            traceback.print_exc()
 
     return {"status": "received", "event": x_github_event}
